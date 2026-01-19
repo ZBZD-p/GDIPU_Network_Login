@@ -120,7 +120,16 @@ if %errorlevel% neq 0 (
 :START_SERVICE
 echo [Step 3] Starting Service... >> "%LOG_FILE%"
 
-start "" "%PYTHON_CMD%" web_ui.py
+
+:: Switch to pythonw.exe to hide the console window
+if "%PYTHON_CMD%"=="python" (
+    set "PYTHONW_CMD=pythonw"
+) else (
+    set "PYTHONW_CMD=!PYTHON_CMD:python.exe=pythonw.exe!"
+)
+
+echo [Info] Starting background service with: !PYTHONW_CMD! >> "%LOG_FILE%"
+start "" "!PYTHONW_CMD!" web_ui.py
 if %errorlevel% neq 0 (
     echo [Error] Failed to launch web_ui.py >> "%LOG_FILE%"
     echo [Error] Failed to start application.

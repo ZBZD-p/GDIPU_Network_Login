@@ -82,14 +82,16 @@ class LoggerWriter:
         self.writer = writer
 
     def write(self, message):
-        self.writer.write(message)
+        if self.writer:
+            self.writer.write(message)
         if message.strip():
             STATE["log"].append(message.strip())
             if len(STATE["log"]) > 100:
                  STATE["log"] = STATE["log"][-100:]
 
     def flush(self):
-        self.writer.flush()
+        if self.writer:
+            self.writer.flush()
 
 sys.stdout = LoggerWriter(sys.stdout)
 sys.stderr = LoggerWriter(sys.stderr)
@@ -1050,6 +1052,7 @@ def disable_startup():
         return jsonify({"msg": f"执行失败: {str(e)}"})
 
 
+
 def setup_tray(server_port):
     if not HAS_TRAY: return
 
@@ -1060,13 +1063,21 @@ def setup_tray(server_port):
         icon.stop()
         os._exit(0)
 
-    image = Image.open("tray_icon.png")
-    menu = pystray.Menu(
-        pystray.MenuItem("打开管理页面", open_web, default=True),
-        pystray.MenuItem("退出", on_exit)
-    )
-    icon = pystray.Icon("SrunLogin", image, "广轻校园网认证", menu)
-    icon.run()
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        img_path = os.path.join(base_dir, "tray_icon.png")
+        
+        image = Image.open(img_path)
+        menu = pystray.Menu(
+            pystray.MenuItem("打开管理页面", open_web, default=True),
+            pystray.MenuItem("退出", on_exit)
+        )
+        icon = pystray.Icon("SrunLogin", image, "广轻校园网认证", menu)
+        icon.run()
+    except Exception as e:
+        with open("tray_error.txt", "w", encoding="utf-8") as f:
+            f.write(f"Tray Error: {str(e)}")
+        print(f"托盘图标启动失败: {e}")
 
 if __name__ == '__main__':
     # Attempt to hide console immediately

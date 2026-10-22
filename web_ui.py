@@ -1016,11 +1016,17 @@ def enable_startup():
         if not os.path.exists(script_path):
              return jsonify({"msg": "找不到启动脚本文件"})
 
+        # 通过 wscript 以隐藏窗口方式运行 bat，避免开机时弹出 cmd 窗口
+        hidden_path = os.path.join(working_dir, "hidden_start.vbs")
+        with open(hidden_path, "w", encoding="gbk") as f:
+            f.write(f'CreateObject("WScript.Shell").Run """" & "{script_path}" & """", 0, False\n')
+
         vbs_content = f"""
         Set oWS = WScript.CreateObject("WScript.Shell")
         sLinkFile = "{link_path}"
         Set oLink = oWS.CreateShortcut(sLinkFile)
-        oLink.TargetPath = "{script_path}"
+        oLink.TargetPath = "wscript.exe"
+        oLink.Arguments = Chr(34) & "{hidden_path}" & Chr(34)
         oLink.WorkingDirectory = "{working_dir}"
         oLink.Description = "校园网自动登录助手"
         oLink.Save
